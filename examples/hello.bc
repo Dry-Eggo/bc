@@ -1,0 +1,4 @@
+
+fn main() void {
+    let foo i32 = 40;       
+}

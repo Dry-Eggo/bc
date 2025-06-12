@@ -1,0 +1,5 @@
+name "bc"
+description "Compiler for the BC language"
+authors "Dry"
+copyright "Copyright © 2025, Dry"
+license "MIT"
