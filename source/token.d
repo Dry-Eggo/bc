@@ -1,7 +1,8 @@
 module token;
 import std.format;
 
-enum Tokenkind {
+enum Tokenkind
+{
     Identifier,
     Number,
     Fn,
@@ -15,20 +16,78 @@ enum Tokenkind {
     Colon,
     Semi,
     // types
-    I8, I16, I32, I64, U8, U16, U32, U64, Str, Void, Bool, Chr,
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
+    Str,
+    Void,
+    Bool,
+    Chr,
     // operators
-    ADD, ADDADD, ADDEQ, SUB, SUBSUB, SUBEQ, MUL, MULEQ, DIV, DIVEQ, EQ, EQEQ,
-    SHR, SHREQ, SHL, SHLEQ, OR, AND, APS /* & */, APSEQ, MOD, MODEQ,
+    ADD,
+    ADDADD,
+    ADDEQ,
+    SUB,
+    SUBSUB,
+    SUBEQ,
+    MUL,
+    MULEQ,
+    DIV,
+    DIVEQ,
+    EQ,
+    EQEQ,
+    SHR,
+    SHREQ,
+    SHL,
+    SHLEQ,
+    OR,
+    AND,
+    APS /* & */ ,
+    APSEQ,
+    MOD,
+    MODEQ,
     // bindings
-    PUB, LET, CONST, MUT, PRIV, STAT /* static */,
+    PUB,
+    LET,
+    CONST,
+    MUT,
+    PRIV,
+    STAT /* static */ ,
+    EXTRN,
     EOF,
 }
 
-struct Token {
+string TK_tostr(Tokenkind k)
+{
+    switch (k)
+    {
+    case Tokenkind.EQ:
+        return "=";
+    default:
+        return "nil";
+    }
+}
+
+struct Span
+{
+    int line;
+    int cols;
+    int cole;
+}
+
+struct Token
+{
     Tokenkind kind;
     string text;
+    Span span;
 
-    string tostr() const {
+    string tostr() const
+    {
         return format("(%s, \"%s\")", kind, text);
     }
 }

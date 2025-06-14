@@ -1,124 +1,238 @@
 module lexer;
 import std.string;
-import std.ascii: isDigit;
+import std.ascii : isDigit;
 import std.uni;
+import core.stdc.stdlib : exit;
 import std.array;
 import std.stdio;
 import token;
+import diagnostics;
 
-
-Token[] lex(string source) {
+struct Lexer
+{
+    int line = 1;
+    int column = 1;
+    int pos = 0;
+    string source;
+    ErrorManager* errors;
     Appender!(Token[]) tokens;
-    size_t i = 0;
-    while (i < source.length) {
-        if (isWhite(source[i]))  {
-            i++;
-            continue;
-        }
-        if (isAlpha(source[i]) || source[i] == '_') {
-            size_t start = i;
-            while (i < source.length && isAlphaNum(source[i]) || source[i] == '_') {
-                i++;
-            }
-            Tokenkind kind = Tokenkind.Identifier;
-            string word = source[start .. i];
-            switch(word) {
-                case "fn" : kind = Tokenkind.Fn; break;
-                case "void": kind = Tokenkind.Void; break;
-                case "i8": kind = Tokenkind.I8; break;
-                case "i16": kind = Tokenkind.I16; break;
-                case "i32": kind = Tokenkind.I32; break;
-                case "i64": kind = Tokenkind.I64; break;
-                case "u64": kind = Tokenkind.U64; break;
-                case "u32": kind = Tokenkind.U32; break;
-                case "u16": kind = Tokenkind.U16; break;
-                case "u8": kind = Tokenkind.U8; break;
-                case "chr": kind = Tokenkind.Chr; break;
-                case "str": kind = Tokenkind.Str; break;
-                case "let": kind = Tokenkind.LET; break;
-                case "mut": kind = Tokenkind.MUT; break;
-                case "const": kind = Tokenkind.CONST; break;
-                case "pub": kind = Tokenkind.PUB; break;
-                case "priv": kind = Tokenkind.PRIV; break;
-                case "stat": kind = Tokenkind.STAT; break;
-                default: break;
-            }
-            tokens.put(Token(kind, word));
-            continue;
-        }
-        if(isDigit(source[i])) {
-            size_t start = i;
-            while (i < source.length && isDigit(source[i])) {
-                i++;
-            }
-            string num = source[start .. i];
-            tokens.put(Token(Tokenkind.Number, num));
-            continue;
-        }
-        switch(source[i]) {
-            case '{': tokens.put(Token(Tokenkind.OBrace, "{")); i++; break;
-            case '}': tokens.put(Token(Tokenkind.CBrace, "}")); i++; break;
-            case '(': tokens.put(Token(Tokenkind.OParen, "(")); i++; break;
-            case ')': tokens.put(Token(Tokenkind.CParen, ")")); i++; break;
-            case ':': tokens.put(Token(Tokenkind.Colon, ",")); i++; break;
-            case ';': tokens.put(Token(Tokenkind.Semi, ";")); i++; break;
-            case '=': 
-               i++; 
-               if (source[i] == '=') {
-                   i++;
-                   tokens.put(Token(Tokenkind.EQEQ, "==")); 
-                   break;
-               }
-               tokens.put(Token(Tokenkind.EQ, "=")); 
-               break;
-            case '+': 
-               i++; 
-               if (source[i] == '=') {
-                   i++;
-                   tokens.put(Token(Tokenkind.ADDEQ, "+=")); 
-                   break;
-               }
-               if (source[i] == '+') {
-                   i++;
-                   tokens.put(Token(Tokenkind.ADDADD, "++")); 
-                   break;
-               }
-               tokens.put(Token(Tokenkind.ADD, "+")); 
-               break;
-            case '-': 
-               i++; 
-               if (source[i] == '=') {
-                   i++;
-                   tokens.put(Token(Tokenkind.SUBEQ, "-=")); 
-                   break;
-               }
-               if (source[i] == '-') {
-                   i++;
-                   tokens.put(Token(Tokenkind.SUBSUB, "--")); 
-                   break;
-               }
-               tokens.put(Token(Tokenkind.SUB, "-")); 
-               break;
-            case '*': 
-               i++; 
-               if (source[i] == '=') {
-                   i++;
-                   tokens.put(Token(Tokenkind.MULEQ, "*=")); 
-                   break;
-               }
-               tokens.put(Token(Tokenkind.MUL, "*")); 
-               break;
-            case '/': 
-               i++; 
-               if (source[i] == '=') {
-                   i++;
-                   tokens.put(Token(Tokenkind.DIVEQ, "/=")); 
-                   break;
-               }
-               tokens.put(Token(Tokenkind.DIV, "/")); 
-               break;
-            default: break;
-        }
+    this(string source, ErrorManager* e)
+    {
+        this.source = source;
+        this.errors = e;
     }
-    return tokens.data;
+
+    void advance()
+    {
+        auto c = peek();
+        if (c == '\n')
+        {
+            line++;
+            column = 1;
+        }
+        else
+        {
+            column++;
+        }
+        pos++;
+    }
+
+    char peek()
+    {
+        return source[pos];
+    }
+
+    Token[] lex()
+    {
+        while (pos < source.length)
+        {
+            if (isWhite(peek()))
+            {
+                advance();
+                continue;
+            }
+            if (isAlpha(peek()) || peek() == '_')
+            {
+                int start = pos;
+                int sc = column;
+                while (pos < source.length && (isAlphaNum(peek()) || peek() == '_'))
+                {
+                    advance();
+                }
+                Tokenkind kind = Tokenkind.Identifier;
+                string word = source[start .. pos];
+                switch (word)
+                {
+                case "fn":
+                    kind = Tokenkind.Fn;
+                    break;
+                case "void":
+                    kind = Tokenkind.Void;
+                    break;
+                case "i8":
+                    kind = Tokenkind.I8;
+                    break;
+                case "i16":
+                    kind = Tokenkind.I16;
+                    break;
+                case "i32":
+                    kind = Tokenkind.I32;
+                    break;
+                case "i64":
+                    kind = Tokenkind.I64;
+                    break;
+                case "u64":
+                    kind = Tokenkind.U64;
+                    break;
+                case "u32":
+                    kind = Tokenkind.U32;
+                    break;
+                case "u16":
+                    kind = Tokenkind.U16;
+                    break;
+                case "u8":
+                    kind = Tokenkind.U8;
+                    break;
+                case "chr":
+                    kind = Tokenkind.Chr;
+                    break;
+                case "str":
+                    kind = Tokenkind.Str;
+                    break;
+                case "let":
+                    kind = Tokenkind.LET;
+                    break;
+                case "mut":
+                    kind = Tokenkind.MUT;
+                    break;
+                case "const":
+                    kind = Tokenkind.CONST;
+                    break;
+                case "pub":
+                    kind = Tokenkind.PUB;
+                    break;
+                case "priv":
+                    kind = Tokenkind.PRIV;
+                    break;
+                case "stat":
+                    kind = Tokenkind.STAT;
+                    break;
+                case "extrn":
+                    kind = Tokenkind.EXTRN;
+                    break;
+                default:
+                    break;
+                }
+                tokens.put(Token(kind, word, Span(line, sc, column - 1)));
+                continue;
+            }
+            if (isDigit(peek()))
+            {
+                size_t start = pos;
+                int sc = column;
+                while (pos < source.length && isDigit(peek()))
+                {
+                    advance();
+                }
+                string num = source[start .. pos];
+                tokens.put(Token(Tokenkind.Number, num, Span(line, sc, column - 1)));
+                continue;
+            }
+            int start = column;
+            switch (peek())
+            {
+            case '{':
+                tokens.put(Token(Tokenkind.OBrace, "{", Span(line, start, column)));
+                advance();
+                break;
+            case '}':
+                tokens.put(Token(Tokenkind.CBrace, "}", Span(line, start, column)));
+                advance();
+                break;
+            case '(':
+                tokens.put(Token(Tokenkind.OParen, "(", Span(line, start, column)));
+                advance();
+                break;
+            case ')':
+                tokens.put(Token(Tokenkind.CParen, ")", Span(line, start, column)));
+                advance();
+                break;
+            case ':':
+                tokens.put(Token(Tokenkind.Colon, ",", Span(line, start, column)));
+                advance();
+                break;
+            case ';':
+                tokens.put(Token(Tokenkind.Semi, ";", Span(line, start, column)));
+                advance();
+                break;
+            case '=':
+                advance();
+                if (peek() == '=')
+                {
+                    advance();
+                    tokens.put(Token(Tokenkind.EQEQ, "==", Span(line, start, column)));
+                    break;
+                }
+                tokens.put(Token(Tokenkind.EQ, "=", Span(line, start, column)));
+                break;
+            case '+':
+                advance();
+                if (peek() == '=')
+                {
+                    advance();
+                    tokens.put(Token(Tokenkind.ADDEQ, "+=", Span(line, start, column)));
+                    break;
+                }
+                if (peek() == '+')
+                {
+                    advance();
+                    tokens.put(Token(Tokenkind.ADDADD, "++", Span(line, start, column)));
+                    break;
+                }
+                tokens.put(Token(Tokenkind.ADD, "+", Span(line, start, column)));
+                break;
+            case '-':
+                advance();
+                if (peek() == '=')
+                {
+                    advance();
+                    tokens.put(Token(Tokenkind.SUBEQ, "-=", Span(line, start, column)));
+                    break;
+                }
+                if (peek() == '-')
+                {
+                    advance();
+                    tokens.put(Token(Tokenkind.SUBSUB, "--", Span(line, start, column)));
+                    break;
+                }
+                tokens.put(Token(Tokenkind.SUB, "-", Span(line, start, column)));
+                break;
+            case '*':
+                advance();
+                if (peek() == '=')
+                {
+                    advance();
+                    tokens.put(Token(Tokenkind.MULEQ, "*=", Span(line, start, column)));
+                    break;
+                }
+                tokens.put(Token(Tokenkind.MUL, "*", Span(line, start, column)));
+                break;
+            case '/':
+                advance();
+                if (peek() == '=')
+                {
+                    advance();
+                    tokens.put(Token(Tokenkind.DIVEQ, "/=", Span(line, start, column)));
+                    break;
+                }
+                tokens.put(Token(Tokenkind.DIV, "/", Span(line, start, column)));
+                break;
+            default:
+                errors.report(Diagnostics(Span(line, start, column), source, "Unexpected char", "", DiagType
+                        .Error), true);
+                break;
+            }
+        }
+        return tokens.data;
+    }
 }

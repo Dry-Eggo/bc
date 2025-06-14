@@ -10,6 +10,10 @@ struct BuildOptions {
 
 BuildOptions parse_args(string[] args) {
     BuildOptions opts;
+    if (args.length <= 1) {
+        writeln("BC: No arguments were passed");
+        exit(1);           
+    }
     for(int i = 0; i < args.length; i++) {
         if (args[i] == "-o") {
             if (i + 1 >= args.length) {

@@ -3,36 +3,57 @@ import ast;
 import token;
 import std.array;
 import std.stdio;
-import core.stdc.stdlib: exit;
+import core.stdc.stdlib : exit;
+import diagnostics;
 
-
-struct Parser {
+struct Parser
+{
     Token[] tokens;
+    ErrorManager* errors;
     int pos;
     int max;
+    string source;
 
-    this(Token[] tokens) {
+    this(Token[] tokens, ErrorManager* error, string s)
+    {
         this.pos = 0;
         this.tokens = tokens;
-        this.max = cast(int)tokens.length;
+        this.max = cast(int) tokens.length;
+        this.errors = error;
+        this.source = s;
     }
-    void expect(Tokenkind k) {
-        if (peek().kind != k) {
-            writeln("BC: Expected Qualified ID");
-            exit(1);
+
+    void expect(Tokenkind k)
+    {
+        if (peek().kind != k)
+        {
+            errors.add(Diagnostics(peek().span, source, "BC: Expected Qualified ID: '" ~ TK_tostr(k) ~ "'", "", DiagType
+                    .Error));
         }
         advance();
     }
-    bool match(Tokenkind k) {
+
+    bool match(Tokenkind k)
+    {
         return peek().kind == k;
     }
-    Node parse() {
+
+    Node parse()
+    {
         Node program;
         Appender!(Node[]) nodes;
-        while(peek().kind != Tokenkind.EOF) {
-            switch(peek().kind) {
-                case Tokenkind.Fn: nodes.put(parse_fn()); continue;
-                default: continue;
+        while (peek().kind != Tokenkind.EOF)
+        {
+            switch (peek().kind)
+            {
+            case Tokenkind.Fn:
+                nodes.put(parse_fn());
+                continue;
+            case Tokenkind.EXTRN:
+                nodes.put(parse_extrn());
+                continue;
+            default:
+                continue;
             }
             advance();
         }
@@ -40,140 +61,301 @@ struct Parser {
         program.kind = NodeKind.Program;
         return program;
     }
-    Token peek() {
-        if (pos >= max) {
+
+    Token peek()
+    {
+        if (pos >= max)
+        {
             return Token(Tokenkind.EOF, "");
         }
         return tokens[pos];
     }
-    void advance() {pos++;};
-    Node parse_fn() {
+
+    Token before()
+    {
+        if (pos - 1 < 0)
+        {
+            return Token(Tokenkind.EOF, "");
+        }
+        return tokens[pos - 1];
+    }
+
+    void advance()
+    {
+        pos++;
+    }
+
+    Node parse_extrn()
+    {
+        Node extrn;
+        extrn.kind = NodeKind.Extrn;
+        expect(Tokenkind.EXTRN);
+        if (match(Tokenkind.Fn))
+        {
+            // extrn fn...
+            extrn.extrn.kind = ExtrnKind.Function;
+            Node func = parse_fn();
+            func.func.is_extrn = true;
+            // TODO: Add support for
+            // extrn("linkage_name") fn alias(...);
+            func.func.extrn_name = func.func.name;
+            extrn.extrn.func = func.func;
+        }
+        return extrn;
+    }
+
+    Param[] parse_args()
+    {
+        auto params = appender!(Param[]);
+        while (peek().kind != Tokenkind.CParen)
+        {
+            Param p;
+            if (match(Tokenkind.Identifier))
+            {
+                p.name = peek().text;
+                advance();
+            }
+            p.type = parse_type();
+            params.put(p);
+            if (match(Tokenkind.Comma))
+            {
+                advance();
+            }
+        }
+        return params.data;
+    }
+
+    Node parse_fn()
+    {
         Node fn;
         FnDecl funcStmt;
         expect(Tokenkind.Fn);
-        if (match(Tokenkind.Identifier)) {
+        if (
+            match(Tokenkind.Identifier))
+        {
             funcStmt.name = peek().text;
             advance();
-        } else {
+        }
+        else
+        {
             writeln("Expected identifier");
             exit(1);
         }
         expect(Tokenkind.OParen);
+        funcStmt.params = parse_args();
         expect(Tokenkind.CParen);
-        if (match(Tokenkind.OBrace)) 
-            funcStmt.type = Type.create_void();
+        if (match(Tokenkind.OBrace))
+            funcStmt.type = Type
+                .create_void();
         else
             funcStmt.type = parse_type();
-        expect(Tokenkind.OBrace);
-        funcStmt.fn_body = parse_body();
-        expect(Tokenkind.CBrace);
-        fn.kind = NodeKind.FuncDecl;
+        if (match(Tokenkind.OBrace))
+        {
+            expect(
+                Tokenkind.OBrace);
+            funcStmt.fn_body = parse_body();
+            expect(Tokenkind.CBrace);
+        }
+        else
+        {
+            expect(Tokenkind.Semi);
+        }
+        fn.kind = NodeKind
+            .FuncDecl;
         fn.func = funcStmt;
         return fn;
     }
-    Node parse_binding() {
+
+    Node parse_binding()
+    {
         VarBind Binding;
         Node n;
-        if(match(Tokenkind.LET) || match(Tokenkind.CONST))
+        if (match(Tokenkind.LET) || match(
+                Tokenkind.CONST))
             Binding.is_const = true;
         else
             Binding.is_const = false;
-
         advance();
-        if (match(Tokenkind.Identifier)) {
+        if (
+            match(
+                Tokenkind
+                .Identifier))
+        {
             Binding.name = peek().text;
-        } else {
-            writeln("Expected Identifier");
+        }
+        else
+        {
+            writeln(
+                "Expected Identifier");
             exit(1);
         }
         advance();
-
         Binding.type = parse_type();
         expect(Tokenkind.EQ);
         Node* expr = parse_expr();
         Binding.value = expr;
-        n.kind = NodeKind.Binding;
+        n.kind = NodeKind
+            .Binding;
         n.binding = Binding;
         return n;
     }
-    Type parse_type() {
-        switch(peek().kind) {
-            case Tokenkind.Void:{
-                Type ty = Type(BaseKind.Void);
+
+    Type parse_type()
+    {
+        switch (peek().kind)
+        {
+        case Tokenkind.Void:
+            {
+                Type ty = Type(
+                    BaseKind.Void);
                 advance();
                 return ty;
-            }break;
-            case Tokenkind.I32:{
-                Type ty = Type(BaseKind.I32);
+            }
+            break;
+        case Tokenkind.I32:
+            {
+                Type ty = Type(
+                    BaseKind.I32);
                 advance();
                 return ty;
-            }break;
-            case Tokenkind.I8:{
-                Type ty = Type(BaseKind.I8);
+            }
+            break;
+        case Tokenkind.I8:
+            {
+                Type ty = Type(
+                    BaseKind.I8);
                 advance();
                 return ty;
-            }break;
-            case Tokenkind.I16:{
-                Type ty = Type(BaseKind.I16);
+            }
+            break;
+        case Tokenkind.I16:
+            {
+                Type ty = Type(
+                    BaseKind.I16);
                 advance();
                 return ty;
-            }break;
-            case Tokenkind.I64:{
-                Type ty = Type(BaseKind.I64);
+            }
+            break;
+        case Tokenkind.I64:
+            {
+                Type ty = Type(
+                    BaseKind.I64);
                 advance();
                 return ty;
-            }break;
-            default: break;
+            }
+            break;
+        default:
+            break;
         }
-        writeln("BC: Invalid Type");
-        exit(1);
+        errors.add(Diagnostics(peek().span, source, "Expected a Type", "", DiagType.Error));
+        advance();
+        return Type(BaseKind.I32);
     }
-    Node[] parse_body() {
+
+    Node[] parse_body()
+    {
         Appender!(Node[]) nodes;
-        while (peek().kind != Tokenkind.EOF && peek().kind != Tokenkind.CBrace) {
-            switch(peek().kind) {
-                case Tokenkind.LET:
-                case Tokenkind.MUT:
-                case Tokenkind.CONST:
-                    nodes.put(parse_binding());
+        while (peek().kind != Tokenkind.EOF && peek()
+            .kind != Tokenkind
+            .CBrace)
+        {
+            switch (peek().kind)
+            {
+            case Tokenkind.LET:
+            case Tokenkind.MUT:
+            case Tokenkind.CONST:
+                nodes.put(
+                    parse_binding());
+                expect(
+                    Tokenkind
+                        .Semi);
+                continue;
+            default:
+                {
+                    Node n;
+                    n.span = peek().span;
+                    n.kind = NodeKind.Expr;
+                    n.expr.node = parse_expr();
                     expect(Tokenkind.Semi);
+                    nodes.put(n);
                     continue;
-                default: continue;
+                }
             }
         }
         return nodes.data;
     }
-    Node* parse_expr() {
+
+    Node* parse_expr()
+    {
         Node* lhs = parse_term();
-        while (match(Tokenkind.ADD) || match(Tokenkind.SUB)) {
-            Tokenkind op = peek().kind;
+        lhs.span = peek().span;
+        while (match(Tokenkind.ADD) || match(
+                Tokenkind.SUB))
+        {
+            Tokenkind op = peek()
+                .kind;
             advance();
             Node* rhs = parse_term();
             lhs.binop = BinaryOp(op, lhs, rhs);
         }
         return lhs;
     }
-    Node* parse_term() {
+
+    Node* parse_term()
+    {
         Node* lhs = parse_atom();
-        while (match(Tokenkind.MUL) || match(Tokenkind.DIV)) {
-            Tokenkind op = peek().kind;
+        while (match(Tokenkind.MUL) || match(
+                Tokenkind.DIV))
+        {
+            Tokenkind op = peek()
+                .kind;
             advance();
             Node* rhs = parse_expr();
             lhs.binop = BinaryOp(op, lhs, rhs);
         }
         return lhs;
     }
-    Node* parse_atom() {
+
+    Node* parse_atom()
+    {
         Node* n = new Node;
-        switch(peek().kind) {
-            case Tokenkind.Number:
-               n.kind = NodeKind.Int; 
-               n.token_data = peek();
-               advance();
-               return n;
-            default:
-               return n;
+        switch (peek().kind)
+        {
+        case Tokenkind.Number:
+            n.kind = NodeKind
+                .Int;
+            n.token_data = peek();
+            advance();
+            return n;
+        case Tokenkind.Identifier:
+            {
+                n.kind = NodeKind.Ident;
+                n.token_data = peek();
+                advance();
+                if (peek().kind == Tokenkind.OParen)
+                {
+                    advance();
+                    Node* funcall = new Node;
+                    funcall.fcall.callee = n;
+                    funcall.kind = NodeKind.FCall;
+                    while (peek().kind != Tokenkind.CParen)
+                    {
+                        funcall.fcall.params.put(parse_expr());
+                        if (peek().kind == Tokenkind.Comma)
+                        {
+                            advance();
+                        }
+                    }
+                    expect(Tokenkind.CParen);
+                    return funcall;
+                }
+                return n;
+            }
+            break;
+        default:
+            errors.add(Diagnostics(peek().span, source, "Invalid Expression", "", DiagType
+                    .Error));
+            return n;
         }
     }
 }
-
