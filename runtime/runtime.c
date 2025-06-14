@@ -60,11 +60,7 @@ extern void putint(int i) {
   puts(buf);
 }
 
-extern void texit(int code) {
-  __asm__ volatile("mov $60, %eax\n"
-                   "syscall\n"
-                   "r=(rax)");
-}
+extern void texit(int code) { __bc_sys2(60, code); }
 
 extern void main();
 extern void _start() {
