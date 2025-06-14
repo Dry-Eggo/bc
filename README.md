@@ -6,7 +6,7 @@ It currently **transpiles to LLVM IR manually**, with plans to support C and ass
 
 ---
 
-## âœ¨ Why Better C?
+## ¨ Why Better C?
 
 C is powerful but clunky. BC keeps the power, drops the clunk.
 
@@ -19,20 +19,20 @@ C is powerful but clunky. BC keeps the power, drops the clunk.
 
 ---
 
-## ðŸ§  Current Status
+##  Current Status
 
-âœ… Lexing  
-âœ… Parsing into AST  
-âœ… Manual LLVM IR Codegen  
-âœ… Variable bindings  
-âœ… `let` definitions  
-âœ… Type annotations (`i32`, `void`, etc)  
-âœ… Function definitions  
-âœ… LLVM IR output that can be compiled with `llc + ld`
+    Lexing  
+    Parsing into AST  
+    Manual LLVM IR Codegen  
+    Variable bindings
+    `let` definitions  
+    Type annotations (`i32`, `void`, etc)  
+    Function definitions  
+    LLVM IR output that can be compiled with `llc + ld`
 
 ---
 
-## ðŸ§ª Example
+## Example
 
 ### Input (BC source):
 ```bc
@@ -67,7 +67,7 @@ ld -o a.out out.s bc/runtime/start.o bc/runtime/runtime.o
 
 ---
 
-## ðŸ”§ Toolchain
+## Toolchain
 
 - Language written in **D**.
 - Compiler manually emits **LLVM IR**.
@@ -76,7 +76,7 @@ ld -o a.out out.s bc/runtime/start.o bc/runtime/runtime.o
 
 ---
 
-## ðŸ”­ Design Goals
+## Design Goals
 
 BC aims to be:
 
@@ -87,14 +87,14 @@ BC aims to be:
 
 ---
 
-## ðŸ“‚ File Extensions
+## File Extensions
 
 BC source files use `.bc` (coincidentally also the LLVM bitcode extension).  
 We may change this later if needed, but for now: `.bc` it is.
 
 ---
 
-## ðŸ“ˆ Roadmap (short-term)
+## Roadmap (short-term)
 
 - Type checker
 - Argument support for functions
@@ -106,7 +106,7 @@ We may change this later if needed, but for now: `.bc` it is.
 
 ---
 
-## ðŸ¤˜ Contributing / Hacking
+## Contributing / Hacking
 
 Right now this is mostly a solo project by me, and you're welcome to fork or follow progress.
 
