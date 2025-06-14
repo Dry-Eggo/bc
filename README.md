@@ -21,14 +21,14 @@ C is powerful but clunky. BC keeps the power, drops the clunk.
 
 ##  Current Status
 
-    Lexing  
-    Parsing into AST  
-    Manual LLVM IR Codegen  
-    Variable bindings
-    `let` definitions  
-    Type annotations (`i32`, `void`, etc)  
-    Function definitions  
-    LLVM IR output that can be compiled with `llc + ld`
+- Lexing  
+- Parsing into AST  
+- Manual LLVM IR Codegen  
+- Variable bindings
+- `let` definitions  
+- Type annotations (`i32`, `void`, etc)  
+- Function definitions  
+- LLVM IR output that can be compiled with `llc + ld`
 
 ---
 
