@@ -1,6 +1,5 @@
-extrn fn putint(i i32) void;
-extrn fn puts(m cstr) void;
+extrn fn puts(cstr) void;
 
-fn main() void {
-    puts(c"Hello World\n");
+fn main () void {
+  puts(c"Hello World\n");
 }

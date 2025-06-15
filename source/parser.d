@@ -27,8 +27,14 @@ struct Parser
   {
     if (peek().kind != k)
     {
-      errors.add(Diagnostics(peek().span, source, "BC: Expected Qualified ID: '" ~ TK_tostr(k) ~ "'", "", DiagType
-          .Error));
+      if (peek().kind != Tokenkind.EOF)
+        errors.add(Diagnostics(peek().span, source, "BC: Expected Qualified ID: '" ~ TK_tostr(k) ~ "'", "", DiagType
+            .Error));
+      else
+      {
+        errors.add(Diagnostics(before().span, source, "BC: Expected Qualified ID: '" ~ TK_tostr(k) ~ "'", "", DiagType
+            .Error));
+      }
     }
     advance();
   }
@@ -286,7 +292,8 @@ struct Parser
           n.span = peek().span;
           n.kind = NodeKind.Expr;
           n.expr.node = parse_expr();
-          expect(Tokenkind.Semi);
+          if (n.expr.node.kind != NodeKind.If)
+            expect(Tokenkind.Semi);
           nodes.put(n);
           continue;
         }
@@ -300,11 +307,11 @@ struct Parser
     Node* lhs = parse_logical_and();
     while (peek().kind == Tokenkind.OR)
     {
-      auto op = peek().kind;
+      auto op = peek();
       advance();
       Node* rhs = parse_logical_or();
       Node* n = new Node;
-      n.binop = BinaryOp(op, lhs, rhs);
+      n.binop = BinaryOp(STokenkind(op.kind, op.span), lhs, rhs);
       n.kind = NodeKind.BinaryOp;
       if (!match(Tokenkind.OR))
       {
@@ -324,7 +331,7 @@ struct Parser
       advance();
       Node* rhs = parse_logical_or();
       Node* n = new Node;
-      n.binop = BinaryOp(STokenkind(op.span, op.kind), lhs, rhs);
+      n.binop = BinaryOp(STokenkind(op.kind, op.span), lhs, rhs);
       n.kind = NodeKind.BinaryOp;
       if (!match(Tokenkind.AND))
       {
@@ -345,9 +352,10 @@ struct Parser
       advance();
       Node* rhs = parse_logical_or();
       Node* n = new Node;
-      n.binop = BinaryOp(STokenkind(op.span, op.kind), lhs, rhs);
+      n.binop = BinaryOp(STokenkind(op.kind, op.span), lhs, rhs);
       n.kind = NodeKind.BinaryOp;
-      if (!match(Tokenkind.EQEQ) && !match(Tokenkind.NEQ))
+      if (!match(Tokenkind.EQEQ) && !match(Tokenkind.NEQ) && !match(Tokenkind.LT) && !match(
+          Tokenkind.LTEQ) && !match(Tokenkind.GT) && !match(Tokenkind.GTEQ))
       {
         return n;
       }
@@ -368,12 +376,11 @@ struct Parser
     while (match(Tokenkind.ADD) || match(
         Tokenkind.SUB))
     {
-      Tokenkind op = peek()
-        .kind;
+      auto op = peek();
       advance();
       Node* rhs = parse_term();
       Node* n = new Node;
-      n.binop = BinaryOp(op, lhs, rhs);
+      n.binop = BinaryOp(STokenkind(op.kind, op.span), lhs, rhs);
       n.kind = NodeKind.BinaryOp;
       if (!match(Tokenkind.ADD) || match(
           Tokenkind.SUB))
@@ -391,12 +398,11 @@ struct Parser
     while (match(Tokenkind.MUL) || match(
         Tokenkind.DIV))
     {
-      Tokenkind op = peek()
-        .kind;
+      auto op = peek();
       advance();
       Node* rhs = parse_logical_or();
       Node* n = new Node;
-      n.binop = BinaryOp(op, lhs, rhs);
+      n.binop = BinaryOp(STokenkind(op.kind, op.span), lhs, rhs);
       n.kind = NodeKind.BinaryOp;
       if (!match(Tokenkind.MUL) || match(
           Tokenkind.DIV))
@@ -457,6 +463,38 @@ struct Parser
       expect(Tokenkind.CParen);
       n.kind = NodeKind.Expr;
       n.expr.node = expr;
+      return n;
+    case Tokenkind.IF:
+      advance();
+      IfExpr if_expr;
+      n.kind = NodeKind.If;
+      if_expr.cond = parse_logical_or();
+      expect(Tokenkind.OBrace);
+      if_expr.then = Block(parse_body());
+      expect(Tokenkind.CBrace);
+      if (match(Tokenkind.ELSE))
+      {
+        advance();
+        if (match(Tokenkind.IF))
+        {
+          Node* branch = parse_expr();
+          if_expr.else_body = new Block;
+          Node e;
+          e.kind = NodeKind.Expr;
+          e.expr.node = branch;
+          if_expr.else_body.body ~= e;
+        }
+        else
+        {
+          expect(Tokenkind.OBrace);
+          if_expr.else_body = new Block;
+          if_expr.else_body.body = parse_body();
+          expect(Tokenkind.CBrace);
+        }
+
+      }
+
+      n.if_expr = if_expr;
       return n;
     default:
       errors.add(Diagnostics(peek().span, source, "Invalid Expression", "", DiagType

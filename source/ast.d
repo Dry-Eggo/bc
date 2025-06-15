@@ -17,6 +17,11 @@ enum NodeKind
   Program,
   Expr,
   Extrn,
+  If,
+  While,
+  Until,
+  For,
+  ForEach,
 }
 
 enum BaseKind
@@ -155,6 +160,19 @@ struct UnaryOp
   Node* value;
 }
 
+struct Block
+{
+  Node[] body;
+}
+
+struct IfExpr
+{
+  Node* cond;
+  Block then;
+  Appender!(Block[]) branches;
+  Block* else_body = null;
+}
+
 struct FnDecl
 {
   string name;
@@ -208,5 +226,7 @@ struct Node
     BinaryOp binop;
     UnaryOp unop;
     Funccall fcall;
+    Block block;
+    IfExpr if_expr;
   }
 }

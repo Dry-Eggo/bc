@@ -2,12 +2,12 @@
 
 build:
 	dub build
-	./bc examples/expr.bc -o examples/expr.ll
-	llc examples/expr.ll -o examples/expr.s
-	as examples/expr.s -o examples/expr.o
+	./bc examples/if_else.bc -o examples/if_else.ll
+	llc examples/if_else.ll -o examples/if_else.s
+	as examples/if_else.s -o examples/if_else.o
 	nasm -felf64 runtime/syscall.s -o runtime/syscall.o
 	gcc -c runtime/runtime.c -o runtime/runtime.o -w
-	ld examples/expr.o runtime/runtime.o runtime/syscall.o -o examples/expr
+	ld examples/if_else.o runtime/runtime.o runtime/syscall.o -o examples/if_else
 
 run: build
 	examples/hello

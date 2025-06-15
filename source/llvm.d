@@ -149,7 +149,7 @@ struct LLvmCodeGen
       auto rres = gen_expr(*expr.rhs);
       res.preamble ~= lres.preamble;
       res.preamble ~= rres.preamble;
-      switch (expr.op)
+      switch (expr.op.token)
       {
       case Tokenkind.ADD:
         auto tmp = currentCtx.next_ssa();
@@ -267,6 +267,38 @@ struct LLvmCodeGen
         res.type = var.type;
         return res;
       }
+    case NodeKind.If:
+      ExprRes res;
+      IfExpr if_expr = node.if_expr;
+      auto then_branch = format("%%.if%s", currentCtx.next_ssa()[1 .. $]);
+      auto else_branch = format("%%%s.else", then_branch[1 .. $]);
+      auto merge_brach = format("%%%s.done", then_branch[1 .. $]);
+      Appender!(string[]) branches;
+      foreach (i, branch; if_expr.branches)
+      {
+        auto ebranch = format("%%%s.else%d", then_branch[1 .. $], i);
+        branches.put(ebranch);
+      }
+      auto cond_res = gen_expr(*if_expr.cond);
+      res.preamble ~= cond_res.preamble;
+      auto tmp = currentCtx.next_ssa();
+      res.preamble ~= format("    %s = icmp ne %s %s, 0\n", tmp, cond_res.type.tostr(), cond_res
+          .result);
+      if (if_expr.else_body != null)
+        res.preamble ~= format("    br i1 %s, label %s, label %s\n", tmp, then_branch, else_branch);
+      else
+        res.preamble ~= format("    br i1 %s, label %s, label %s\n", tmp, then_branch, merge_brach);
+      res.preamble ~= format("%s:\n", then_branch[1 .. $]);
+      res.preamble ~= gen_body(if_expr.then.body).result;
+      res.preamble ~= format("    br label %s\n", merge_brach);
+      if (if_expr.else_body != null)
+      {
+        res.preamble ~= format("%s:\n", else_branch[1 .. $]);
+        res.preamble ~= gen_body(if_expr.else_body.body).result;
+        res.preamble ~= format("    br label %s\n", merge_brach);
+      }
+      res.preamble ~= format("%s:\n", merge_brach[1 .. $]);
+      return res;
     default:
       writeln("Invalid Expr");
       exit(1);
@@ -404,7 +436,9 @@ struct LLvmCodeGen
       {
       case NodeKind.Binding:
         {
-          stream = gen_binding(node);
+          auto r = gen_binding(node);
+          stream.preamble ~= r.preamble;
+          stream.result ~= r.result;
           continue;
         }
         break;
