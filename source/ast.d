@@ -22,6 +22,7 @@ enum NodeKind
   Until,
   For,
   ForEach,
+  Return,
 }
 
 enum BaseKind
@@ -211,6 +212,11 @@ struct Expr
   Node* node;
 }
 
+struct ReturnValue
+{
+  Node* expr;
+}
+
 struct Node
 {
   NodeKind kind;
@@ -228,5 +234,6 @@ struct Node
     Funccall fcall;
     Block block;
     IfExpr if_expr;
+    ReturnValue ret_value;
   }
 }

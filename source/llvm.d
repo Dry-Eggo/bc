@@ -51,6 +51,7 @@ struct LLvmCodeGen
   Context currentCtx;
   FunctionTable functions;
   string source;
+  Type current_context_expected_return_type;
 
   int globals_counter = 0;
   this(string source, Node program, BuildOptions opts, ErrorManager* e)
@@ -267,18 +268,20 @@ struct LLvmCodeGen
         res.type = var.type;
         return res;
       }
+    case NodeKind.Return:
+      ExprRes res;
+      ReturnValue r = node.ret_value;
+      auto e = gen_expr(*r.expr);
+      res.preamble ~= e.preamble;
+      res.preamble ~= format("    ret %s %s\n", e.type.tostr(), e.result);
+      res.type = e.type;
+      return res;
     case NodeKind.If:
       ExprRes res;
       IfExpr if_expr = node.if_expr;
-      auto then_branch = format("%%.if%s", currentCtx.next_ssa()[1 .. $]);
+      auto then_branch = format("%%.if%s", currentCtx.next_if()[1 .. $]);
       auto else_branch = format("%%%s.else", then_branch[1 .. $]);
       auto merge_brach = format("%%%s.done", then_branch[1 .. $]);
-      Appender!(string[]) branches;
-      foreach (i, branch; if_expr.branches)
-      {
-        auto ebranch = format("%%%s.else%d", then_branch[1 .. $], i);
-        branches.put(ebranch);
-      }
       auto cond_res = gen_expr(*if_expr.cond);
       res.preamble ~= cond_res.preamble;
       auto tmp = currentCtx.next_ssa();
@@ -354,6 +357,7 @@ struct LLvmCodeGen
     func.is_extrn = false;
     func.definition_location = node.span;
     functions.add(func);
+    current_context_expected_return_type = fn.type;
     ExprRes bodyStream = gen_body(fn.fn_body);
     stream ~= bodyStream.result;
     stream ~= "    ret " ~ fn.type.tostr();

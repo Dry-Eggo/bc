@@ -30,6 +30,7 @@ struct Context
 {
   Appender!(Variable[]) variables;
   int ssa_counter = 0; /*  %1, %2, %3, ... */
+  int if_label_counter = 0;
   Context* parent = null;
   this(Context* parent)
   {
@@ -71,6 +72,11 @@ struct Context
   string next_ssa()
   {
     return "%" ~ format("%d", ssa_counter++);
+  }
+
+  string next_if()
+  {
+    return format("%%%d", if_label_counter++);
   }
 }
 

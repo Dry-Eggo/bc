@@ -1,0 +1,13 @@
+extrn fn putint(i32) void;
+
+fn fib(n i32) i32 {
+  if n <= 1 {
+      return n;
+  } else {
+      return fib(n - 1) + fib(n - 2);
+  }
+}
+fn main() void {
+  let result i32 = fib(10);
+  putint(result);
+}

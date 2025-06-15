@@ -59,6 +59,7 @@ struct Parser
         nodes.put(parse_extrn());
         continue;
       default:
+        errors.add(Diagnostics(peek().span, source, "Invalid Top-Level item", "", DiagType.Error));
         continue;
       }
       advance();
@@ -200,7 +201,7 @@ struct Parser
     advance();
     Binding.type = parse_type();
     expect(Tokenkind.EQ);
-    Node* expr = parse_expr();
+    Node* expr = parse_logical_or();
     Binding.value = expr;
     n.kind = NodeKind
       .Binding;
@@ -291,7 +292,7 @@ struct Parser
           Node n;
           n.span = peek().span;
           n.kind = NodeKind.Expr;
-          n.expr.node = parse_expr();
+          n.expr.node = parse_logical_or();
           if (n.expr.node.kind != NodeKind.If)
             expect(Tokenkind.Semi);
           nodes.put(n);
@@ -477,7 +478,7 @@ struct Parser
         advance();
         if (match(Tokenkind.IF))
         {
-          Node* branch = parse_expr();
+          Node* branch = parse_logical_or();
           if_expr.else_body = new Block;
           Node e;
           e.kind = NodeKind.Expr;
@@ -495,6 +496,12 @@ struct Parser
       }
 
       n.if_expr = if_expr;
+      return n;
+    case Tokenkind.RETURN:
+      advance();
+      auto expr = parse_logical_or();
+      n.kind = NodeKind.Return;
+      n.ret_value = ReturnValue(expr);
       return n;
     default:
       errors.add(Diagnostics(peek().span, source, "Invalid Expression", "", DiagType

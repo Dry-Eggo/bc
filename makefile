@@ -2,12 +2,12 @@
 
 build:
 	dub build
-	./bc examples/if_else.bc -o examples/if_else.ll
-	llc examples/if_else.ll -o examples/if_else.s
-	as examples/if_else.s -o examples/if_else.o
+	./bc examples/fibonacci.bc -o examples/fibonacci.ll
+	llc examples/fibonacci.ll -o examples/fibonacci.s
+	as examples/fibonacci.s -o examples/fibonacci.o
 	nasm -felf64 runtime/syscall.s -o runtime/syscall.o
 	gcc -c runtime/runtime.c -o runtime/runtime.o -w
-	ld examples/if_else.o runtime/runtime.o runtime/syscall.o -o examples/if_else
+	ld examples/fibonacci.o runtime/runtime.o runtime/syscall.o -o examples/fibonacci
 
 run: build
 	examples/hello
