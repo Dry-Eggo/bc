@@ -27,6 +27,18 @@ struct ExprRes
     }
 }
 
+string string_escape(string str)
+{
+    string escaped = replace(str, "\\n", "\\0A");
+    return escaped;
+}
+
+int string_escaped_len(string str)
+{
+    string tmp = replace(str, "\\0A", "-");
+    return cast(int) tmp.length;
+}
+
 struct LLvmCodeGen
 {
     Node program;
@@ -120,10 +132,10 @@ struct LLvmCodeGen
             ExprRes res;
             string tmp = "@" ~ format("%d", globals_counter++);
             string tmp2 = "%" ~ format("%d", currentCtx.ssa_counter++);
-            int str_len = cast(int) node.token_data.length;
-            globals ~= format("%s = global [%d x i8] c\"%s\\00\"\n", tmp, node.token_data.length + 1, node
-                    .token_data);
-            res.preamble ~= format("    %s = getelementptr [%d x i8], ptr %s, i32 0, i32 0\n", tmp2, str_len + 1, tmp);
+            auto str = string_escape(node.token_data);
+            int str_len = cast(int) string_escaped_len(str) + 1;
+            globals ~= format("%s = global [%d x i8] c\"%s\\00\"\n", tmp, str_len, str);
+            res.preamble ~= format("    %s = getelementptr [%d x i8], ptr %s, i32 0, i32 0\n", tmp2, str_len, tmp);
             res.result = tmp2;
             res.type = Type.create_ptr();
             return res;

@@ -21,7 +21,7 @@ main:                                   # @main
 	.data
 	.globl	__unnamed_1
 __unnamed_1:
-	.asciz	"Hello World"
-	.size	__unnamed_1, 12
+	.asciz	"Hello World\n"
+	.size	__unnamed_1, 13
 
 	.section	".note.GNU-stack","",@progbits
