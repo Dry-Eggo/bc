@@ -3,93 +3,100 @@ import std.format;
 
 enum Tokenkind
 {
-    Identifier,
-    Number,
-    Fn,
-    CString,
-    String,
-    OParen,
-    CParen,
-    Bang,
-    OBrace,
-    CBrace,
-    Comma,
-    Colon,
-    Semi,
-    // types
-    I8,
-    I16,
-    I32,
-    I64,
-    U8,
-    U16,
-    U32,
-    U64,
-    Str,
-    CStr,
-    Void,
-    Bool,
-    Chr,
-    // operators
-    ADD,
-    ADDADD,
-    ADDEQ,
-    SUB,
-    SUBSUB,
-    SUBEQ,
-    MUL,
-    MULEQ,
-    DIV,
-    DIVEQ,
-    EQ,
-    EQEQ,
-    SHR,
-    SHREQ,
-    SHL,
-    SHLEQ,
-    OR,
-    AND,
-    APS /* & */ ,
-    APSEQ,
-    MOD,
-    MODEQ,
-    // bindings
-    PUB,
-    LET,
-    CONST,
-    MUT,
-    PRIV,
-    STAT /* static */ ,
-    EXTRN,
-    EOF,
+  Identifier,
+  Number,
+  Fn,
+  CString,
+  String,
+  OParen,
+  CParen,
+  Bang,
+  NEQ,
+  OBrace,
+  CBrace,
+  Comma,
+  Colon,
+  Semi,
+  // types
+  I8,
+  I16,
+  I32,
+  I64,
+  U8,
+  U16,
+  U32,
+  U64,
+  Str,
+  CStr,
+  Void,
+  Bool,
+  Chr,
+  // operators
+  ADD,
+  ADDADD,
+  ADDEQ,
+  SUB,
+  SUBSUB,
+  SUBEQ,
+  MUL,
+  MULEQ,
+  DIV,
+  DIVEQ,
+  EQ,
+  EQEQ,
+  SHR,
+  SHREQ,
+  SHL,
+  SHLEQ,
+  OR,
+  BWOR, /* | */
+  BWOREQ, /* != */
+  AND,
+  APS /* & */ ,
+  APSEQ,
+  MOD,
+  MODEQ,
+  LT,
+  LTEQ,
+  GT,
+  GTEQ,
+  // bindings
+  PUB,
+  LET,
+  CONST,
+  MUT,
+  PRIV,
+  STAT /* static */ ,
+  EXTRN,
+  EOF,
 }
 
 string TK_tostr(Tokenkind k)
 {
-    switch (k)
-    {
-    case Tokenkind.EQ:
-        return "=";
-    default:
-        return "nil";
-    }
+  switch (k)
+  {
+  case Tokenkind.EQ:
+    return "=";
+  default:
+    return "nil";
+  }
 }
 
 struct Span
 {
-    int line;
-    int cols;
-    int cole;
+  int line;
+  int cols;
+  int cole;
 }
 
 struct Token
 {
-    Tokenkind kind;
-    string text;
-    Span span;
+  Tokenkind kind;
+  string text;
+  Span span;
 
-    string tostr() const
-    {
-        return format("(%s, \"%s\")", kind, text);
-    }
+  string tostr() const
+  {
+    return format("(%s, \"%s\")", kind, text);
+  }
 }

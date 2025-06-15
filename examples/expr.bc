@@ -1,0 +1,22 @@
+extrn fn putint(i i32) void;
+extrn fn puts(cstr) void;
+
+fn printint(n i32, f i32, n i32) i32 { 
+  putint(n);
+  puts(c"\n");
+}
+
+
+fn main() void {
+  printint(0 && 0);
+  printint(0 && 1);
+  printint(1 && 1);
+  printint(2 == 2);
+  printint(2 != 2);
+  printint(10 >= 10);
+  printint(10 > 10);
+  printint(4 <= 4);
+  printint(4 <= 5, 2);
+  printint(4 || 4);
+  printint(0 || 0);
+}

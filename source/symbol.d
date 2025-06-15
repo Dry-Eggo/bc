@@ -1,85 +1,94 @@
 module symbol;
 import std.array;
 import ast;
+import std.format;
+import token;
 
 struct Variable
 {
-    bool poison = false;
-    string name;
-    Type type;
+  bool poison = false;
+
+  string name;
+  Type type;
 }
 
 Variable poisonValue = Variable(true);
 
 struct Function
 {
-    bool poison = false;
-    string name;
-    Param[] params;
-    Type type;
-    bool is_extrn;
+  bool poison = false;
+  string name;
+  Param[] params;
+  Type type;
+  bool is_extrn;
+  Span definition_location;
 }
 
 Function poisonFunc = Function(true);
 
 struct Context
 {
-    Appender!(Variable[]) variables;
-    int ssa_counter = 0; /*  %1, %2, %3, ... */
-    Context* parent = null;
-    this(Context* parent)
-    {
-        this.parent = parent;
-        this.ssa_counter = 0;
-    }
+  Appender!(Variable[]) variables;
+  int ssa_counter = 0; /*  %1, %2, %3, ... */
+  Context* parent = null;
+  this(Context* parent)
+  {
+    this.parent = parent;
+    this.ssa_counter = 0;
+  }
 
-    void add(Variable v)
-    {
-        variables.put(v);
-    }
+  void add(Variable v)
+  {
+    variables.put(v);
+  }
 
-    bool has(string name)
+  bool has(string name)
+  {
+    foreach (var; variables)
     {
-        foreach (var; variables)
-        {
-            if (var.name == name)
-                return true;
-        }
-        if (parent != null)
-            return parent.has(name);
-        return false;
+      if (var.name == name)
+        return true;
     }
+    if (parent != null)
+      return parent.has(name);
+    return false;
+  }
 
-    Variable get(string name)
+  Variable get(string name)
+  {
+    foreach (var; variables)
     {
-        foreach (var; variables)
-        {
-            if (var.name == name)
-            {
-                return var;
-            }
-        }
-        if (parent != null)
-            return parent.get(name);
-        return poisonValue;
+      if (var.name == name)
+      {
+        return var;
+      }
     }
+    if (parent != null)
+      return parent.get(name);
+    return poisonValue;
+  }
+
+  string next_ssa()
+  {
+    return "%" ~ format("%d", ssa_counter++);
+  }
 }
 
 struct FunctionTable
 {
-    Appender!(Function[]) functions;
-    void add(Function f)
-    {
-        functions.put(f);
-    }
+  Appender!(Function[]) functions;
+  void add(Function f)
+  {
+    functions.put(f);
+  }
 
-    Function find(string name)
+  Function find(string name)
+  {
+    foreach (func; functions)
     {
-        foreach (func; functions)
-        {
-            if (func.name == name)
-                return func;
-        }
-        return poisonFunc;
+      if (func.name == name)
+        return func;
     }
+    return poisonFunc;
+  }
 }

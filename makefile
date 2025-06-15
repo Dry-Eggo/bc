@@ -2,12 +2,12 @@
 
 build:
 	dub build
-	./bc examples/hello.bc -o examples/hello.ll
-	llc examples/hello.ll -o examples/hello.s
-	as examples/hello.s -o examples/hello.o
+	./bc examples/expr.bc -o examples/expr.ll
+	llc examples/expr.ll -o examples/expr.s
+	as examples/expr.s -o examples/expr.o
 	nasm -felf64 runtime/syscall.s -o runtime/syscall.o
 	gcc -c runtime/runtime.c -o runtime/runtime.o -w
-	ld examples/hello.o runtime/runtime.o runtime/syscall.o -o examples/hello
+	ld examples/expr.o runtime/runtime.o runtime/syscall.o -o examples/expr
 
 run: build
 	examples/hello
@@ -18,5 +18,5 @@ dry:
 	# ld hello.o runtime/runtime.o -o hello
 
 clean:
-	rm hello.*
-	rm hello
+	rm -rf */*.ll
+	rm -rf examples/*.s

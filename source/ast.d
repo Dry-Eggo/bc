@@ -1,204 +1,212 @@
 module ast;
 import token;
 import std.array;
+import symbol;
 
 enum NodeKind
 {
-    FuncDecl,
-    FCall,
-    Binding,
-    Int,
-    String,
-    CString,
-    Ident,
-    BinaryOp,
-    UnaryOp,
-    Program,
-    Expr,
-    Extrn,
+  FuncDecl,
+  FCall,
+  Binding,
+  Int,
+  String,
+  CString,
+  Ident,
+  BinaryOp,
+  UnaryOp,
+  Program,
+  Expr,
+  Extrn,
 }
 
 enum BaseKind
 {
-    I8,
-    I16,
-    I32,
-    I64,
-    U8,
-    U16,
-    U32,
-    U64,
-    Str,
-    Void,
-    Bool,
-    Chr,
-    Ptr,
+  I8,
+  I16,
+  I32,
+  I64,
+  U8,
+  U16,
+  U32,
+  U64,
+  Str,
+  Void,
+  Bool,
+  Chr,
+  Ptr,
 }
 
 struct Type
 {
-    BaseKind kind;
-    bool is_ptr;
-    string name;
-    this(BaseKind k)
-    {
-        this.kind = k;
-        this.is_ptr = false;
-        this.name = "";
-    }
+  BaseKind kind;
+  bool is_ptr;
+  string name;
+  this(BaseKind k)
+  {
+    this.kind = k;
+    this.is_ptr = false;
+    this.name = "";
+  }
 
-    this(BaseKind k, bool isptr, string name)
-    {
-        this.kind = k;
-        this.is_ptr = isptr;
-        this.name = name;
-    }
+  this(BaseKind k, bool isptr, string name)
+  {
+    this.kind = k;
+    this.is_ptr = isptr;
+    this.name = name;
+  }
 
-    string tostr()
+  string tostr()
+  {
+    switch (kind)
     {
-        switch (kind)
-        {
-        case BaseKind.Void:
-            return "void";
-        case BaseKind.I32:
-            return "i32";
-        case BaseKind.I8:
-            return "i8";
-        case BaseKind.I16:
-            return "i16";
-        case BaseKind.I64:
-            return "i64";
-        case BaseKind.Ptr:
-            return "ptr";
-        default:
-            assert(0);
-        }
+    case BaseKind.Void:
+      return "void";
+    case BaseKind.I32:
+      return "i32";
+    case BaseKind.I8:
+      return "i8";
+    case BaseKind.I16:
+      return "i16";
+    case BaseKind.I64:
+      return "i64";
+    case BaseKind.Ptr:
+      return "ptr";
+    default:
+      assert(0);
     }
+  }
 
-    static Type create_void()
-    {
-        return Type(BaseKind.Void, false, "");
-    }
+  static Type create_void()
+  {
+    return Type(BaseKind.Void, false, "");
+  }
 
-    static Type create_ptr()
-    {
-        return Type(BaseKind.Ptr, false, "");
-    }
+  static Type create_ptr()
+  {
+    return Type(BaseKind.Ptr, false, "");
+  }
 
-    static Type create_int()
-    {
-        return Type(BaseKind.I32, false, "");
-    }
+  static Type create_int()
+  {
+    return Type(BaseKind.I32, false, "");
+  }
 }
 
 struct Param
 {
-    string name;
-    Type type;
+  Span span;
+  string name;
+  Type type;
 }
 
-string param_spread(Param[] p)
+string param_spread(Param[] p, Context ctx)
 {
-    string res;
-    foreach (i, param; p)
+  string res;
+  foreach (i, param; p)
+  {
+    res ~= param.type.tostr() ~ " " ~ ctx.next_ssa();
+    if (i != p.length - 1)
     {
-        res ~= param.type.tostr() ~ " %" ~ param.name;
-        if (i != p.length - 1)
-        {
-            res ~= ",";
-        }
+      res ~= ",";
     }
-    return res;
+  }
+  return res;
 }
 
 struct VarBind
 {
-    string name;
-    Node* value;
-    bool is_const;
-    bool is_initialized;
-    Type type;
-    this(string name)
-    {
-        this.name = name;
-        this.is_const = true;
-        this.is_initialized = false;
-    }
+  string name;
+  Node* value;
+  bool is_const;
+  bool is_initialized;
+  Type type;
+  this(string name)
+  {
+    this.name = name;
+    this.is_const = true;
+    this.is_initialized = false;
+  }
 
-    this(string name, Node* value)
-    {
-        this.name = name;
-        this.is_const = true;
-        this.is_initialized = true;
-        this.value = value;
-    }
+  this(string name, Node* value)
+  {
+    this.name = name;
+    this.is_const = true;
+    this.is_initialized = true;
+    this.value = value;
+  }
+}
+
+struct STokenkind
+{
+  Tokenkind token;
+  Span span;
 }
 
 struct BinaryOp
 {
-    Tokenkind op;
-    Node* lhs;
-    Node* rhs;
+  STokenkind op;
+  Node* lhs;
+  Node* rhs;
 }
 
 struct UnaryOp
 {
-    Tokenkind op;
-    Node* value;
+  Tokenkind op;
+  Node* value;
 }
 
 struct FnDecl
 {
-    string name;
-    Param[] params;
-    Type type;
-    Node[] fn_body;
-    bool is_extrn;
-    string extrn_name;
+  string name;
+  Param[] params;
+  Type type;
+  Node[] fn_body;
+  bool is_extrn;
+  string extrn_name;
 }
 
 enum ExtrnKind
 {
-    Function,
-    Struct,
-    Binding,
+  Function,
+  Struct,
+  Binding,
 }
 
 struct ExtrnStmt
 {
-    ExtrnKind kind;
-    union
-    {
-        FnDecl func;
-        VarBind binding;
-    }
+  ExtrnKind kind;
+  union
+  {
+    FnDecl func;
+    VarBind binding;
+  }
 }
 
 struct Funccall
 {
-    Node* callee;
-    Appender!(Node*[]) params;
+  Node* callee;
+  Appender!(Node*[]) params;
 }
 
 struct Expr
 {
-    Node* node;
+  Node* node;
 }
 
 struct Node
 {
-    NodeKind kind;
-    Span span;
-    union
-    {
-        Expr expr;
-        string token_data;
-        ExtrnStmt extrn;
-        FnDecl func;
-        Node[] program;
-        VarBind binding;
-        BinaryOp binop;
-        UnaryOp unop;
-        Funccall fcall;
-    }
+  NodeKind kind;
+  Span span;
+  union
+  {
+    Expr expr;
+    string token_data;
+    ExtrnStmt extrn;
+    FnDecl func;
+    Node[] program;
+    VarBind binding;
+    BinaryOp binop;
+    UnaryOp unop;
+    Funccall fcall;
+  }
 }

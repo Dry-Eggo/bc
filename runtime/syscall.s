@@ -1,5 +1,4 @@
 
-
 global __bc_sys0
 __bc_sys0:
         syscall
