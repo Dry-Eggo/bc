@@ -9,6 +9,7 @@ enum NodeKind
     Binding,
     Int,
     String,
+    CString,
     Ident,
     BinaryOp,
     UnaryOp,
@@ -31,6 +32,7 @@ enum BaseKind
     Void,
     Bool,
     Chr,
+    Ptr,
 }
 
 struct Type
@@ -66,6 +68,8 @@ struct Type
             return "i16";
         case BaseKind.I64:
             return "i64";
+        case BaseKind.Ptr:
+            return "ptr";
         default:
             assert(0);
         }
@@ -74,6 +78,11 @@ struct Type
     static Type create_void()
     {
         return Type(BaseKind.Void, false, "");
+    }
+
+    static Type create_ptr()
+    {
+        return Type(BaseKind.Ptr, false, "");
     }
 
     static Type create_int()

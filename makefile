@@ -13,7 +13,7 @@ run: build
 	examples/hello
 
 dry:
-	clang hello.ll runtime/runtime.o runtime/syscall.o -o hello -ffreestanding -nostdlib
+	clang examples/hello.ll runtime/runtime.o runtime/syscall.o -o examples/hello -ffreestanding -nostdlib
 	# as hello.s -o hello.o
 	# ld hello.o runtime/runtime.o -o hello
 

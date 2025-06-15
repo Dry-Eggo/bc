@@ -51,6 +51,22 @@ struct Lexer
                 advance();
                 continue;
             }
+            if (peek() == 'c' && source[pos + 1] == '\"')
+            {
+                advance();
+                advance();
+                int start = pos;
+                int sc = column;
+                string buf;
+                while (pos < source.length && peek() != '\"')
+                {
+                    advance();
+                }
+                buf = source[start .. pos];
+                advance();
+                tokens.put(Token(Tokenkind.CString, buf, Span(line, sc, column - 1)));
+                continue;
+            }
             if (isAlpha(peek()) || peek() == '_')
             {
                 int start = pos;
@@ -99,6 +115,9 @@ struct Lexer
                 case "str":
                     kind = Tokenkind.Str;
                     break;
+                case "cstr":
+                    kind = Tokenkind.CStr;
+                    break;
                 case "let":
                     kind = Tokenkind.LET;
                     break;
@@ -130,12 +149,14 @@ struct Lexer
             {
                 size_t start = pos;
                 int sc = column;
-                while (pos < source.length && isDigit(peek()))
+                while (pos < source.length && isDigit(
+                        peek()))
                 {
                     advance();
                 }
                 string num = source[start .. pos];
-                tokens.put(Token(Tokenkind.Number, num, Span(line, sc, column - 1)));
+                tokens.put(Token(Tokenkind.Number, num, Span(
+                        line, sc, column - 1)));
                 continue;
             }
             int start = column;
@@ -200,13 +221,15 @@ struct Lexer
                 if (peek() == '=')
                 {
                     advance();
-                    tokens.put(Token(Tokenkind.SUBEQ, "-=", Span(line, start, column)));
+                    tokens.put(Token(Tokenkind.SUBEQ, "-=", Span(
+                            line, start, column)));
                     break;
                 }
                 if (peek() == '-')
                 {
                     advance();
-                    tokens.put(Token(Tokenkind.SUBSUB, "--", Span(line, start, column)));
+                    tokens.put(Token(Tokenkind.SUBSUB, "--", Span(
+                            line, start, column)));
                     break;
                 }
                 tokens.put(Token(Tokenkind.SUB, "-", Span(line, start, column)));
@@ -216,7 +239,8 @@ struct Lexer
                 if (peek() == '=')
                 {
                     advance();
-                    tokens.put(Token(Tokenkind.MULEQ, "*=", Span(line, start, column)));
+                    tokens.put(Token(Tokenkind.MULEQ, "*=", Span(
+                            line, start, column)));
                     break;
                 }
                 tokens.put(Token(Tokenkind.MUL, "*", Span(line, start, column)));
@@ -226,7 +250,8 @@ struct Lexer
                 if (peek() == '=')
                 {
                     advance();
-                    tokens.put(Token(Tokenkind.DIVEQ, "/=", Span(line, start, column)));
+                    tokens.put(Token(Tokenkind.DIVEQ, "/=", Span(
+                            line, start, column)));
                     break;
                 }
                 tokens.put(Token(Tokenkind.DIV, "/", Span(line, start, column)));

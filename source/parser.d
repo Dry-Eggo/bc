@@ -244,6 +244,14 @@ struct Parser
                 return ty;
             }
             break;
+        case Tokenkind.CStr:
+            {
+                Type ty = Type(
+                    BaseKind.Ptr);
+                advance();
+                return ty;
+            }
+            break;
         default:
             break;
         }
@@ -339,6 +347,11 @@ struct Parser
         case Tokenkind.Number:
             n.kind = NodeKind
                 .Int;
+            n.token_data = peek().text;
+            advance();
+            return n;
+        case Tokenkind.CString:
+            n.kind = NodeKind.CString;
             n.token_data = peek().text;
             advance();
             return n;

@@ -33,9 +33,12 @@ struct LLvmCodeGen
     BuildOptions opts;
     ErrorManager* errors;
     string extrn_stream;
+    string globals;
     Context globalCtx;
     Context currentCtx;
     FunctionTable functions;
+
+    int globals_counter = 0;
     this(Node program, BuildOptions opts, ErrorManager* e)
     {
         this.program = program;
@@ -72,15 +75,18 @@ struct LLvmCodeGen
             exit(1);
         }
         string stream;
-        stream ~= "; ModuleId = '" ~ opts.output[0 .. opts.output.length - 3] ~ "'\n";
-        stream ~= "source_filename = \"" ~ opts.input ~ "\"\n";
+        string final_stream;
+        final_stream ~= "; ModuleId = '" ~ opts.output[0 .. opts.output.length - 3] ~ "'\n";
+        final_stream ~= "source_filename = \"" ~ opts.input ~ "\"\n";
         foreach (node; program.program)
         {
             stream ~= gen_expr(node).result;
         }
         stream ~= "\n" ~ extrn_stream ~
             "\n";
-        write!(string)(opts.output, stream);
+        final_stream ~= globals;
+        final_stream ~= "\n" ~ stream ~ "\n";
+        write!(string)(opts.output, final_stream);
     }
 
     ExprRes gen_expr(Node node)
@@ -106,10 +112,20 @@ struct LLvmCodeGen
                 return res;
             }
         case NodeKind.Int:
-            // Appender!string stream;
             ExprRes res;
             res.result = node.token_data;
             res.type = Type.create_int();
+            return res;
+        case NodeKind.CString:
+            ExprRes res;
+            string tmp = "@" ~ format("%d", globals_counter++);
+            string tmp2 = "%" ~ format("%d", currentCtx.ssa_counter++);
+            int str_len = cast(int) node.token_data.length;
+            globals ~= format("\n%s = global [%d x i8] c\"%s\\00\"\n", tmp, node.token_data.length + 1, node
+                    .token_data);
+            res.preamble ~= format("%s = getelementptr [%d x i8], ptr %s, i32 0, i32 0", tmp2, str_len + 1, tmp);
+            res.result = tmp2;
+            res.type = Type.create_ptr();
             return res;
         case NodeKind.BinaryOp:
             ExprRes res;

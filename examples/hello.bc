@@ -1,7 +1,6 @@
 extrn fn putint(i i32) void;
+extrn fn puts(m cstr) void;
 
 fn main() void {
-    let foo i32 = 40 + 2;
-    let bar i32 = foo;
-    putint(bar);
+    puts(c"Hello World");
 }
