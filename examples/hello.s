@@ -6,17 +6,11 @@
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:                                # %entry
-	subq	$24, %rsp
-	.cfi_def_cfa_offset 32
-	movl	$42, 12(%rsp)
-	movl	$42, 8(%rsp)
-	movq	__unnamed_1@GOTPCREL(%rip), %rax
-	movq	%rax, 16(%rsp)
-	movl	$42, %edi
-	callq	putint@PLT
-	movq	__unnamed_2@GOTPCREL(%rip), %rdi
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movq	__unnamed_1@GOTPCREL(%rip), %rdi
 	callq	puts@PLT
-	addq	$24, %rsp
+	popq	%rax
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end0:
@@ -27,13 +21,7 @@ main:                                   # @main
 	.data
 	.globl	__unnamed_1
 __unnamed_1:
-	.asciz	"Foo"
-	.size	__unnamed_1, 4
-
-	.type	__unnamed_2,@object             # @1
-	.globl	__unnamed_2
-__unnamed_2:
 	.asciz	"Hello World"
-	.size	__unnamed_2, 12
+	.size	__unnamed_1, 12
 
 	.section	".note.GNU-stack","",@progbits

@@ -121,9 +121,9 @@ struct LLvmCodeGen
             string tmp = "@" ~ format("%d", globals_counter++);
             string tmp2 = "%" ~ format("%d", currentCtx.ssa_counter++);
             int str_len = cast(int) node.token_data.length;
-            globals ~= format("\n%s = global [%d x i8] c\"%s\\00\"\n", tmp, node.token_data.length + 1, node
+            globals ~= format("%s = global [%d x i8] c\"%s\\00\"\n", tmp, node.token_data.length + 1, node
                     .token_data);
-            res.preamble ~= format("%s = getelementptr [%d x i8], ptr %s, i32 0, i32 0", tmp2, str_len + 1, tmp);
+            res.preamble ~= format("    %s = getelementptr [%d x i8], ptr %s, i32 0, i32 0\n", tmp2, str_len + 1, tmp);
             res.result = tmp2;
             res.type = Type.create_ptr();
             return res;
@@ -175,7 +175,7 @@ struct LLvmCodeGen
             {
                 FnDecl fn = node.extrn.func;
                 extrn_stream ~= "declare " ~ fn.type.tostr() ~ " @" ~ fn.name ~ "(" ~ param_spread(
-                    fn.params) ~ ")";
+                    fn.params) ~ ")\n";
                 auto f = Function(false, fn.name, fn.params, fn.type, true);
                 functions.add(f);
             }
