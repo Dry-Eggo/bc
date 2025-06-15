@@ -82,7 +82,7 @@ BC aims to be:
 
 - Freestanding-first: works without libc.
 - Predictable: no hidden allocations, no magic behaviors.
-- Modern: inspired by Rust, and Odinâ€”but compiles down to clean, raw output.
+- Modern: inspired by Rust, and Odin but compiles down to clean, raw output.
 - Extensible: eventual plans for modules, generics, and user-defined memory management.
 
 ---
