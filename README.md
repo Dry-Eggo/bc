@@ -15,7 +15,7 @@ C is powerful but clunky. BC keeps the power, drops the clunk.
 - No standard library unless you want one.
 - Explicit, readable syntax.
 - Designed for **freestanding**, **bare-metal**, and **systems** programming.
-- You write code â†’ BC turns it into clean LLVM IR â†’ you control the final binary.
+- You write code BC turns it into clean LLVM IR you control the final binary.
 
 ---
 
