@@ -16,11 +16,10 @@ extern int putbyte(char n) {
 
 extern void puts(const char *fmt) {
   int len = 0;
-  while (fmt[len] != '\0') {
-    char c = fmt[len];
-    putbyte(c);
-    ++len;
-  }
+  const char *tmp = fmt;
+  while (*tmp++)
+    len++;
+  __bc_sys4(1, 1, (long)fmt, len);
 }
 
 extern char *bitos(long n) {
