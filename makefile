@@ -2,20 +2,19 @@
 
 build:
 	dub build
-	./bc examples/fibonacci.bc -o examples/fibonacci.ll
-	llc examples/fibonacci.ll -o examples/fibonacci.s
-	as examples/fibonacci.s -o examples/fibonacci.o
+	./bc examples/factorial.bc -o examples/factorial.ll
+	llc examples/factorial.ll -o examples/factorial.s
+	as examples/factorial.s -o examples/factorial.o
 	nasm -felf64 runtime/syscall.s -o runtime/syscall.o
 	gcc -c runtime/runtime.c -o runtime/runtime.o -w
-	ld examples/fibonacci.o runtime/runtime.o runtime/syscall.o -o examples/fibonacci
-
+	ld examples/factorial.o runtime/runtime.o runtime/syscall.o -o examples/factorial
 run: build
 	examples/hello
 
 dry:
-	clang examples/hello.ll runtime/runtime.o runtime/syscall.o -o examples/hello -ffreestanding -nostdlib
-	# as hello.s -o hello.o
-	# ld hello.o runtime/runtime.o -o hello
+	clang examples/factorial.ll runtime/runtime.o runtime/syscall.o -o examples/fibonacci -ffreestanding -nostdlib
+	# as fibonacci.s -o hello.o
+	# ld fibonacci.o runtime/runtime.o -o hello
 
 clean:
 	rm -rf */*.ll

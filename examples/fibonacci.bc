@@ -7,6 +7,7 @@ fn fib(n i32) i32 {
       return fib(n - 1) + fib(n - 2);
   }
 }
+
 fn main() void {
   let result i32 = fib(10);
   putint(result);

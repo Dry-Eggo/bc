@@ -1,0 +1,15 @@
+extrn fn putint(i32) void;
+
+fn factorial(n i32) i32 {
+    if n <= 1 {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+
+fn main() void {
+    let result i32 = factorial(10);
+    putint(result);
+}

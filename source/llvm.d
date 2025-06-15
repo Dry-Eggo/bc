@@ -293,12 +293,19 @@ struct LLvmCodeGen
         res.preamble ~= format("    br i1 %s, label %s, label %s\n", tmp, then_branch, merge_brach);
       res.preamble ~= format("%s:\n", then_branch[1 .. $]);
       res.preamble ~= gen_body(if_expr.then.body).result;
-      res.preamble ~= format("    br label %s\n", merge_brach);
+      if (if_expr.then.body[$ - 1].kind != NodeKind.Expr && if_expr.then.body[$ - 1].expr.node.kind != NodeKind
+        .Return)
+
+        res.preamble ~= format("    br label %s\n", merge_brach);
       if (if_expr.else_body != null)
       {
         res.preamble ~= format("%s:\n", else_branch[1 .. $]);
-        res.preamble ~= gen_body(if_expr.else_body.body).result;
-        res.preamble ~= format("    br label %s\n", merge_brach);
+        res.preamble ~= gen_body(if_expr.else_body.body)
+          .result;
+        if (if_expr.else_body.body[$ - 1].kind != NodeKind.Expr && if_expr
+          .else_body.body[$ - 1].expr.node.kind != NodeKind
+          .Return)
+          res.preamble ~= format("    br label %s\n", merge_brach);
       }
       res.preamble ~= format("%s:\n", merge_brach[1 .. $]);
       return res;
@@ -320,7 +327,8 @@ struct LLvmCodeGen
         FnDecl fn = node.extrn.func;
         extrn_stream ~= "declare " ~ fn.type.tostr() ~ " @" ~ fn.name ~ "(" ~ param_spread(
           fn.params, currentCtx) ~ ")\n";
-        auto f = Function(false, fn.name, fn.params, fn.type, true, node.span);
+        auto f = Function(false, fn.name, fn.params, fn.type, true, node
+            .span);
         functions.add(f);
       }
       break;
@@ -337,15 +345,18 @@ struct LLvmCodeGen
     auto fn = node.func;
     string stream;
     currentCtx = newCtx();
-    stream ~= "define " ~ fn.type.tostr() ~ " @" ~ fn.name ~ "(" ~ param_spread(
-      fn.params, currentCtx) ~ ") {\n";
+    stream ~= "define " ~ fn.type.tostr() ~ " @" ~ fn
+      .name ~ "(" ~ param_spread(
+        fn.params, currentCtx) ~ ") {\n";
     stream ~= "entry:\n";
     foreach (i, p; fn.params)
     {
       string name = p.name;
       string tmp = currentCtx.next_ssa();
-      stream ~= format("    %%%s = alloca %s\n", name, p.type.tostr());
-      stream ~= format("    store %s %s, ptr %%%s\n", p.type.tostr(), tmp, name);
+      stream ~= format(
+        "    %%%s = alloca %s\n", name, p.type.tostr());
+      stream ~= format(
+        "    store %s %s, ptr %%%s\n", p.type.tostr(), tmp, name);
       Variable var = Variable(false, name, p.type);
       currentCtx.add(var);
     }
@@ -356,9 +367,11 @@ struct LLvmCodeGen
     func.name = fn.name;
     func.is_extrn = false;
     func.definition_location = node.span;
-    functions.add(func);
+    functions.add(
+      func);
     current_context_expected_return_type = fn.type;
-    ExprRes bodyStream = gen_body(fn.fn_body);
+    ExprRes bodyStream = gen_body(
+      fn.fn_body);
     stream ~= bodyStream.result;
     stream ~= "    ret " ~ fn.type.tostr();
     if (fn.type.kind != BaseKind.Void)
@@ -390,7 +403,8 @@ struct LLvmCodeGen
               "Invalid Param Count in %s %s %d %s %d", query.name, ": Expected", query
               .params.length, "got", f
               .params.length), "", DiagType.Error));
-          if (query.params.length > f.params.length)
+          if (
+            query.params.length > f.params.length)
             errors.add(
               Diagnostics(query.params[f.params.length].span, source, "Missing this", "", DiagType
                 .Trace));
@@ -409,7 +423,8 @@ struct LLvmCodeGen
           preamble2 ~= exprres.type.tostr() ~ " " ~ exprres.result;
         }
         string tmp = currentCtx.next_ssa();
-        if (query.type.kind != BaseKind.Void)
+        if (query.type.kind != BaseKind
+          .Void)
         {
           res.preamble ~= "    " ~ tmp ~ " = ";
           res.result = tmp;
@@ -418,13 +433,15 @@ struct LLvmCodeGen
           res.preamble ~= "    ";
         res.preamble ~= "call " ~ query.type.tostr ~ " @" ~ query.name ~ "(" ~ preamble2;
         res.preamble ~= ")\n";
-        res.preamble = format("%s%s", preamble, res.preamble);
+        res.preamble = format("%s%s", preamble, res
+            .preamble);
         res.type = query.type;
         return res;
       }
       break;
     default:
-      errors.report(Diagnostics(f.callee.span, source, "Invalid", "", DiagType.Error), true);
+      errors.report(Diagnostics(f.callee.span, source, "Invalid", "", DiagType
+          .Error), true);
       exit(1);
       break;
     }
@@ -465,10 +482,12 @@ struct LLvmCodeGen
   {
     VarBind var = n.binding;
     ExprRes res;
-    res.result ~= "    %" ~ var.name ~ " = alloca " ~ var.type.tostr() ~ "\n";
+    res.result ~= "    %" ~ var.name ~ " = alloca " ~ var
+      .type.tostr() ~ "\n";
     auto exprres = gen_expr(*var.value);
     res.result ~= exprres.preamble;
-    res.result ~= "    store " ~ var.type.tostr() ~ " " ~ exprres.result ~ ", " ~ "ptr %" ~ var.name ~ "\n";
+    res.result ~= "    store " ~ var.type.tostr() ~ " " ~ exprres
+      .result ~ ", " ~ "ptr %" ~ var.name ~ "\n";
     Variable newVar = Variable(false, var.name, var.type);
     this.currentCtx.add(newVar);
     return res;
