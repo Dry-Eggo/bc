@@ -16,5 +16,4 @@ bc-test-*
 *.lst
 *.out
 *.swp
-*.ll
 bc

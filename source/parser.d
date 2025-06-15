@@ -296,7 +296,15 @@ struct Parser
                 .kind;
             advance();
             Node* rhs = parse_term();
-            lhs.binop = BinaryOp(op, lhs, rhs);
+            Node* n = new Node;
+            n.binop = BinaryOp(op, lhs, rhs);
+            n.kind = NodeKind.BinaryOp;
+            if (!match(Tokenkind.ADD) || match(
+                    Tokenkind.SUB))
+            {
+                return n;
+            }
+
         }
         return lhs;
     }
@@ -311,7 +319,14 @@ struct Parser
                 .kind;
             advance();
             Node* rhs = parse_expr();
-            lhs.binop = BinaryOp(op, lhs, rhs);
+            Node* n = new Node;
+            n.binop = BinaryOp(op, lhs, rhs);
+            n.kind = NodeKind.BinaryOp;
+            if (!match(Tokenkind.MUL) || match(
+                    Tokenkind.DIV))
+            {
+                return n;
+            }
         }
         return lhs;
     }
@@ -324,13 +339,13 @@ struct Parser
         case Tokenkind.Number:
             n.kind = NodeKind
                 .Int;
-            n.token_data = peek();
+            n.token_data = peek().text;
             advance();
             return n;
         case Tokenkind.Identifier:
             {
                 n.kind = NodeKind.Ident;
-                n.token_data = peek();
+                n.token_data = peek().text;
                 advance();
                 if (peek().kind == Tokenkind.OParen)
                 {

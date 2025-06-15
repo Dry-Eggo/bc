@@ -10,7 +10,7 @@ enum NodeKind
     Int,
     String,
     Ident,
-    BinaryOP,
+    BinaryOp,
     UnaryOp,
     Program,
     Expr,
@@ -74,6 +74,11 @@ struct Type
     static Type create_void()
     {
         return Type(BaseKind.Void, false, "");
+    }
+
+    static Type create_int()
+    {
+        return Type(BaseKind.I32, false, "");
     }
 }
 
@@ -178,7 +183,7 @@ struct Node
     union
     {
         Expr expr;
-        Token token_data;
+        string token_data;
         ExtrnStmt extrn;
         FnDecl func;
         Node[] program;

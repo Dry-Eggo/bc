@@ -1,4 +1,5 @@
 module llvm;
+import token;
 import std.format;
 import core.stdc.stdlib : exit;
 import std.file;
@@ -13,9 +14,16 @@ struct ExprRes
 {
     string result;
     string preamble;
+    Type type;
     this(string res)
     {
         this.result = res;
+    }
+
+    this(string res, Type t)
+    {
+        this.result = res;
+        this.type = t;
     }
 }
 
@@ -98,23 +106,47 @@ struct LLvmCodeGen
                 return res;
             }
         case NodeKind.Int:
+            // Appender!string stream;
             ExprRes res;
-            res.result ~= node.token_data.text;
+            res.result = node.token_data;
+            res.type = Type.create_int();
+            return res;
+        case NodeKind.BinaryOp:
+            ExprRes res;
+            BinaryOp expr = node.binop;
+            auto lres = gen_expr(*expr.lhs);
+            auto rres = gen_expr(*expr.rhs);
+            switch (expr.op)
+            {
+            case Tokenkind.ADD:
+                auto tmp = "%" ~ format("%d", currentCtx.ssa_counter++);
+                res.preamble ~= "    " ~ tmp ~ " = add " ~ lres.type.tostr() ~ " " ~ lres.result ~ ", " ~ rres
+                    .result ~ "\n";
+                res.result = tmp;
+                res.type = Type.create_int();
+                return res;
+            default:
+                writeln("BC: invalid operator");
+                exit(1);
+            }
             return res;
         case NodeKind.Ident:
             {
                 ExprRes res;
-                auto var = currentCtx.get(node.token_data.text);
+                auto var = currentCtx.get(node.token_data);
                 int t = currentCtx.ssa_counter++;
                 res.preamble ~= "    %" ~ format("%d", t) ~ " = load " ~ var
                     .type.tostr() ~ ", ptr %" ~ var
                     .name ~ "\n";
-                res.result ~= var.type.tostr() ~ " %" ~ format("%d", t);
+                res.result ~= " %" ~ format("%d", t);
+                res.type = var.type;
                 return res;
             }
         default:
-            break;
+            writeln("Invalid Expr");
+            exit(1);
         }
+
         return ExprRes();
     }
 
@@ -156,14 +188,13 @@ struct LLvmCodeGen
 
     ExprRes gen_funccall(Node node)
     {
-        writeln("here");
         ExprRes res;
         Funccall f = node.fcall;
         switch (f.callee.kind)
         {
         case NodeKind.Ident:
             {
-                auto query = functions.find(f.callee.token_data.text);
+                auto query = functions.find(f.callee.token_data);
                 if (query.poison)
                 {
                     writeln("Use of Undeclared function");
@@ -180,9 +211,10 @@ struct LLvmCodeGen
                 {
                     auto exprres = gen_expr(*arg);
                     res.preamble ~= exprres.preamble;
-                    res.result ~= exprres.result;
+                    res.result ~= exprres.type.tostr() ~ " " ~ exprres.result;
                 }
                 res.result ~= ")\n";
+                res.type = query.type;
                 return res;
             }
             break;
@@ -228,6 +260,7 @@ struct LLvmCodeGen
         ExprRes res;
         res.result ~= "    %" ~ var.name ~ " = alloca " ~ var.type.tostr() ~ "\n";
         auto exprres = gen_expr(*var.value);
+        res.result ~= exprres.preamble;
         res.result ~= "    store " ~ var.type.tostr() ~ " " ~ exprres.result ~ ", " ~ "ptr %" ~ var.name ~ "\n";
         Variable newVar = Variable(false, var.name, var.type);
         this.currentCtx.add(newVar);

@@ -165,6 +165,10 @@ struct Lexer
                 tokens.put(Token(Tokenkind.Semi, ";", Span(line, start, column)));
                 advance();
                 break;
+            case ',':
+                tokens.put(Token(Tokenkind.Comma, ",", Span(line, start, column)));
+                advance();
+                break;
             case '=':
                 advance();
                 if (peek() == '=')

@@ -18,7 +18,8 @@ void main(string[] args)
         exit(1);
     }
     ErrorManager* e = new ErrorManager;
-    Lexer lexer = Lexer(readText(opts.input), e);
+    auto src = readText(opts.input);
+    Lexer lexer = Lexer(src, e);
     auto tokens = lexer.lex();
     if (opts.debug_enabled)
     {

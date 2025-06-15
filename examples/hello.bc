@@ -1,6 +1,7 @@
 extrn fn putint(i i32) void;
 
 fn main() void {
-    let foo i32 = 40;
-    putint(foo);
+    let foo i32 = 40 + 2;
+    let bar i32 = foo;
+    putint(bar);
 }

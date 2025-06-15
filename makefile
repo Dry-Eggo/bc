@@ -2,15 +2,15 @@
 
 build:
 	dub build
-	./bc examples/hello.bc
-	llc hello.ll -o hello.s
-	as hello.s -o hello.o
+	./bc examples/hello.bc -o examples/hello.ll
+	llc examples/hello.ll -o examples/hello.s
+	as examples/hello.s -o examples/hello.o
 	nasm -felf64 runtime/syscall.s -o runtime/syscall.o
-	gcc -c runtime/runtime.c -o runtime/runtime.o
-	ld hello.o runtime/runtime.o runtime/syscall.o -o hello
+	gcc -c runtime/runtime.c -o runtime/runtime.o -w
+	ld examples/hello.o runtime/runtime.o runtime/syscall.o -o examples/hello
 
 run: build
-	./hello
+	examples/hello
 
 dry:
 	clang hello.ll runtime/runtime.o runtime/syscall.o -o hello -ffreestanding -nostdlib
