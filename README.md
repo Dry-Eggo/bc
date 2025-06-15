@@ -90,7 +90,7 @@ BC aims to be:
 ## File Extensions
 
 BC source files use `.bc` (coincidentally also the LLVM bitcode extension).  
-We may change this later if needed, but for now: `.bc` it is.
+I may change this later if needed, but for now: `.bc` it is.
 
 ---
 
