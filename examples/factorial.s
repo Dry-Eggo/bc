@@ -1,5 +1,5 @@
 	.text
-	.file	"factorial.bc"
+	.file	"factorial.bcs"
 	.globl	factorial                       # -- Begin function factorial
 	.p2align	4, 0x90
 	.type	factorial,@function
@@ -40,7 +40,7 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	pushq	%rax
 	.cfi_def_cfa_offset 16
-	movl	$10, %edi
+	movl	$9, %edi
 	callq	factorial@PLT
 	movl	%eax, 4(%rsp)
 	movl	%eax, %edi

@@ -1,5 +1,5 @@
 ; ModuleId = 'examples/factorial'
-source_filename = "examples/factorial.bc"
+source_filename = "examples/factorial.bcs"
 
 define i32 @factorial(i32 %0) {
 entry:
@@ -25,7 +25,7 @@ entry:
 define void @main() {
 entry:
     %result = alloca i32
-    %0 = call i32 @factorial(i32 10)
+    %0 = call i32 @factorial(i32 9)
     store i32 %0, ptr %result
     %1 = load i32, ptr %result
     call void @putint(i32  %1)

@@ -10,6 +10,6 @@ fn factorial(n i32) i32 {
 
 
 fn main() void {
-    let result i32 = factorial(10);
+    let result i32 = factorial(9);
     putint(result);
 }

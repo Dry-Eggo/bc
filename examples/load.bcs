@@ -1,0 +1,9 @@
+extrn fn puts(cstr) void;
+
+// C Target Test
+
+fn main() void {
+    let x i32 = 40;
+    let y cstr = c"Hello World";
+    puts(y);
+}

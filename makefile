@@ -2,12 +2,18 @@
 
 build:
 	dub build
-	./bc examples/factorial.bc -o examples/factorial.ll
-	llc examples/factorial.ll -o examples/factorial.s
-	as examples/factorial.s -o examples/factorial.o
+	./bc examples/loop.bcs -o examples/loop.ll
+	llc examples/loop.ll -o examples/loop.s
+	as examples/loop.s -o examples/loop.o
 	nasm -felf64 runtime/syscall.s -o runtime/syscall.o
 	gcc -c runtime/runtime.c -o runtime/runtime.o -w
-	ld examples/factorial.o runtime/runtime.o runtime/syscall.o -o examples/factorial
+	ld examples/loop.o runtime/runtime.o runtime/syscall.o -o examples/loop
+
+compile:
+	dub build
+	nasm -felf64 runtime/syscall.s -o runtime/syscall.o
+	gcc -c runtime/runtime.c -o runtime/runtime.o -w
+
 run: build
 	examples/hello
 
