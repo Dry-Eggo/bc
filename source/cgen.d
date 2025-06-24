@@ -95,7 +95,7 @@ struct CCodeGen
             res.result = format("\"%s\"", node.token_data);
             break;
         case NodeKind.Ident:
-                // TODO: Add Actual Checking for Variable Exsisence
+            // TODO: Add Actual Checking for Variable Exsisence
             res.result = node.token_data;
             break;
         case NodeKind.Expr:

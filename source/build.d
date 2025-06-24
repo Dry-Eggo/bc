@@ -43,7 +43,7 @@ BuildOptions parse_args(string[] args)
 	            writeln("BC: '--t' expected and argument");
     	        exit(1);
 	        }
-        	auto target = args[i][4..$]; 
+        	auto target = args[i][3..$]; 
 	        switch(target) {
     	    case "c":
     	        opts.buildtarget = Target.C;
@@ -55,6 +55,7 @@ BuildOptions parse_args(string[] args)
                 writeln("BC: Unknown Target: ", target);
                 exit(1);
             }
+		i++;
 	    }
         else if (args[i][0] != '-')
         {

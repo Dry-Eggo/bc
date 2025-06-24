@@ -20,6 +20,7 @@ enum NodeKind
     If,
     While,
     Loop,
+    Assign,
     Until,
     For,
     ForEach,
@@ -202,7 +203,7 @@ enum ExtrnKind
     Binding,
 }
 
-    // TODO:
+// TODO:
 struct Break
 {
     string label;
@@ -216,6 +217,12 @@ struct ExtrnStmt
         FnDecl func;
         VarBind binding;
     }
+}
+
+struct Assign
+{
+    Node* lhs;
+    Node* rhs;
 }
 
 struct Funccall
@@ -241,22 +248,23 @@ struct ReturnValue
 
 struct Node
 {
-    NodeKind kind;
-    Span span;
-    union
+  NodeKind kind;
+  Span span;
+  union
     {
-        Expr expr;
-        string token_data;
-        ExtrnStmt extrn;
-        FnDecl func;
-        Node[] program;
-        VarBind binding;
-        BinaryOp binop;
-        UnaryOp unop;
-        Funccall fcall;
-        Block block;
-        IfExpr if_expr;
-        ReturnValue ret_value;
-        Loop loop;
-    }
+      Expr expr;
+      string token_data;
+      ExtrnStmt extrn;
+      FnDecl func;
+      Node[] program;
+      VarBind binding;
+      BinaryOp binop;
+      UnaryOp unop;
+      Funccall fcall;
+      Block block;
+      IfExpr if_expr;
+      ReturnValue ret_value;
+      Assign assign;
+      Loop loop;
+  }
 }

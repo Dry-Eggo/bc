@@ -50,9 +50,15 @@ enum ContextType
 
 struct ContextPort
 {
-    ContextType type;
-    string expected_return_Label;
-    bool has_returned;
+  ContextType type;
+  string expected_return_Label;
+  bool has_returned;
+  ContextPort* parentPort;
+  string get_loop_label() {
+    if (type == ContextType.LOOP) return expected_return_Label;
+    if(parentPort) return parentPort.get_loop_label();
+    return "";
+  }
 }
 
 struct LLvmCodeGen
@@ -159,6 +165,20 @@ struct LLvmCodeGen
             res.result = tmp2;
             res.type = Type.create_ptr();
             return res;
+	case NodeKind.Assign:
+	  ExprRes res;
+	  switch (node.assign.lhs.kind) {
+	  case NodeKind.Ident:
+	    auto query = currentCtx.get(node.assign.lhs.token_data);
+	    auto rhs = gen_expr(*node.assign.rhs);
+	    res.preamble ~= rhs.preamble;
+	    res.preamble ~= format("    store %s %s, ptr %%%s\n", rhs.type.tostr(), rhs.result, node.assign.lhs.token_data);
+	    break;
+	  default:
+	    errors.add(Diagnostics(node.assign.lhs.span, source, "Invalid lhs", "", DiagType.Error));
+	    return res;
+	  }
+	  return res;
         case NodeKind.BinaryOp:
             ExprRes res;
             BinaryOp expr = node.binop;
@@ -313,7 +333,7 @@ struct LLvmCodeGen
                 return res;
             }
             currentPort.has_returned = true;
-            res.preamble ~= format("   br label %s", currentPort.expected_return_Label);
+            res.preamble ~= format("   br label %s\n", currentPort.get_loop_label());
             return res;
         case NodeKind.If:
             ExprRes res;
@@ -333,10 +353,14 @@ struct LLvmCodeGen
             res.preamble ~= format("%s:\n", then_branch[1 .. $]);
             auto fbres = gen_body(if_expr.then.body);
             res.preamble ~= gen_body(if_expr.then.body).result;
-            if (if_expr.then.body[$ - 1].kind != NodeKind.Expr && if_expr.then.body[$ - 1].expr.node.kind != NodeKind
-                .Return)
+	    if (if_expr.then.body.length > 0) {
+	      if (if_expr.then.body[$ - 1].kind != NodeKind.Expr && if_expr.then.body[$ - 1].expr.node.kind != NodeKind
+		  .Return)
 
                 res.preamble ~= format("    br label %s\n", merge_brach);
+	    } else {
+	      res.preamble ~= format("    br label %s\n", merge_brach);
+	    }
             if (if_expr.else_body != null)
             {
                 res.preamble ~= format("%s:\n", else_branch[1 .. $]);
@@ -354,7 +378,7 @@ struct LLvmCodeGen
             string loop_label = format("%%.loop%s", currentCtx.next_loop()[1 .. $]);
             string loop_done = loop_label[0 .. $] ~ ".done";
             auto prePort = currentPort;
-            currentPort = ContextPort(ContextType.LOOP, loop_done, false);
+            currentPort = ContextPort(ContextType.LOOP, loop_done, false, &prePort);
             res.preamble ~= format("    br label %s\n", loop_label);
             res.preamble ~= format("%s:\n", loop_label[1 .. $]);
             res.preamble ~= format("%s", gen_body(node.loop.body.body).result);

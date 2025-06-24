@@ -79,7 +79,7 @@ struct Lexer
                 string word = source[start .. pos];
                 switch (word)
                 {
-                case "fn":
+                case "func":
                     kind = Tokenkind.Fn;
                     break;
                 case "ret":
@@ -169,7 +169,7 @@ struct Lexer
                     break;
                 case "break":
                     kind = Tokenkind.BREAK;
-                break;
+                    break;
                 default:
                     break;
                 }
@@ -354,6 +354,7 @@ struct Lexer
                     {
                         advance();
                     }
+		    if (peek() == '\n') advance();
                     continue;
                 }
                 tokens.put(Token(Tokenkind.DIV, "/", Span(line, start, column)));

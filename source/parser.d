@@ -48,7 +48,7 @@ struct Parser
     {
         Node program;
         Appender!(Node[]) nodes;
-        while (peek().kind != Tokenkind.EOF)
+    anchor: while (peek().kind != Tokenkind.EOF)
         {
             switch (peek().kind)
             {
@@ -61,7 +61,8 @@ struct Parser
             default:
                 errors.add(Diagnostics(peek().span, source, "Invalid Top-Level item", "", DiagType
                         .Error));
-                continue;
+                advance();
+		break anchor;
             }
             advance();
         }
@@ -124,6 +125,7 @@ struct Parser
                 p.span = peek().span;
                 advance();
             }
+	    expect(Tokenkind.Colon);
             p.type = parse_type();
             params.put(p);
             if (match(Tokenkind.Comma))
@@ -157,8 +159,10 @@ struct Parser
         if (match(Tokenkind.OBrace))
             funcStmt.type = Type
                 .create_void();
-        else
-            funcStmt.type = parse_type();
+        else {
+	  expect(Tokenkind.Colon);
+	  funcStmt.type = parse_type();
+	}
         if (match(Tokenkind.OBrace))
         {
             expect(
@@ -200,6 +204,7 @@ struct Parser
             exit(1);
         }
         advance();
+	expect(Tokenkind.Colon);
         Binding.type = parse_type();
         expect(Tokenkind.EQ);
         Node* expr = parse_logical_or();
@@ -457,7 +462,16 @@ struct Parser
                     }
                     expect(Tokenkind.CParen);
                     return funcall;
-                }
+		}
+		else if (peek().kind == Tokenkind.EQ)
+		{
+		  advance();
+		  Node* assign = new Node;
+		  assign.kind = NodeKind.Assign;
+		  assign.assign.lhs = n;
+		  assign.assign.rhs = parse_expr();
+		  return assign;
+		}
                 return n;
             }
             break;
@@ -512,7 +526,7 @@ struct Parser
             n.ret_value = ReturnValue(expr);
             return n;
         case Tokenkind.LOOP:
-                n.span = peek().span;
+            n.span = peek().span;
             advance();
             n.kind = NodeKind.Loop;
             expect(Tokenkind.OBrace);

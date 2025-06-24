@@ -1,6 +1,6 @@
-extrn fn putint(i32) void;
+extrn func putint(i32): void;
 
-fn factorial(n i32) i32 {
+func factorial(n i32): i32 {
     if n <= 1 {
         return 1;
     } else {
@@ -9,7 +9,7 @@ fn factorial(n i32) i32 {
 }
 
 
-fn main() void {
-    let result i32 = factorial(9);
+func main(): void {
+    let result: i32 = factorial(9);
     putint(result);
 }

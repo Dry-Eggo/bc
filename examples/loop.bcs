@@ -1,9 +1,14 @@
-extrn fn puts(cstr) void;
+extrn func puts(a:cstr): void;
+extrn func putint(a:i32): void;
 
-
-fn main() void {
+func main(): void {
+    let x: i32 = 0;
     loop {
-        puts(c"Hello World");
+	if x >= 10 {
+	    // break;
+	}
+        putint(x);
+	puts(c"\n");
+	x = x +1;
     }
-    puts(c"hello");
 }

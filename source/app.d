@@ -43,6 +43,7 @@ void main(string[] args)
     }
     auto parser = Parser(tokens, e, lexer.source);
     auto ast = parser.parse();
+          writeln("Here");
     if (opts.output.length == 0)
     {
         if (opts.buildtarget == Target.LLVM)

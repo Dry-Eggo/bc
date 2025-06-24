@@ -8,13 +8,19 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	pushq	%rbx
 	.cfi_def_cfa_offset 16
+	subq	$16, %rsp
+	.cfi_def_cfa_offset 32
 	.cfi_offset %rbx, -16
+	movl	$0, 12(%rsp)
 	movq	__unnamed_1@GOTPCREL(%rip), %rbx
 	.p2align	4, 0x90
 .LBB0_1:                                # %.loop0
                                         # =>This Inner Loop Header: Depth=1
+	movl	12(%rsp), %edi
+	callq	putint@PLT
 	movq	%rbx, %rdi
 	callq	puts@PLT
+	incl	12(%rsp)
 	jmp	.LBB0_1
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -24,13 +30,7 @@ main:                                   # @main
 	.data
 	.globl	__unnamed_1
 __unnamed_1:
-	.asciz	"Hello World"
-	.size	__unnamed_1, 12
-
-	.type	__unnamed_2,@object             # @1
-	.globl	__unnamed_2
-__unnamed_2:
-	.asciz	"hello"
-	.size	__unnamed_2, 6
+	.asciz	"\n"
+	.size	__unnamed_1, 2
 
 	.section	".note.GNU-stack","",@progbits

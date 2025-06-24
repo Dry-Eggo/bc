@@ -3,6 +3,35 @@ import std.array;
 import ast;
 import std.format;
 import token;
+import std.typecons: Nullable;
+import std.algorithm: find, map;
+import std.range: walkLength;
+
+// typetable
+struct TypeLayout {
+  string name;
+  Type type;
+  // TODO:
+  Function[] methods;
+}
+struct TypeTabele {
+  Appender!(TypeLayout[]) layouts;
+  void add(TypeLayout layout) {
+    layouts.put(layout);
+  }
+
+  Nullable!TypeLayout get_layout(string name) {
+    foreach(layout; layouts) {
+      if (layout.name == name) {
+	return Nullable!TypeLayout(layout);
+      }
+    }
+    return Nullable!TypeLayout();
+  }
+}
+
+
+
 
 struct Variable
 {
